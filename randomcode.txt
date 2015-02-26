@@ -1,0 +1,1004 @@
+/*
+ * Copyright (C) 2015, Skytrait
+ * 
+ * Licensed under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in
+ * compliance with the License. You may obtain a copy of the
+ * License at
+ * change
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in
+ * writing, software distributed under the License is
+ * distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied. See
+ * the License for the specific language governing
+ * permissions and limitations under the License.
+ * 
+ * @author: Gabriel Brandao
+ * lol changing code
+ * www.skytrait.com
+ */
+
+package com.brandao.tipcalc;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.os.Parcelable;
+import android.preference.PreferenceManager;
+import android.support.v4.app.Fragment;
+import android.support.v7.app.ActionBarActivity;
+import android.support.v7.view.ActionMode;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.BaseAdapter;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ListView;
+import android.widget.PopupMenu;
+import android.widget.Toast;
+import android.widget.PopupMenu.OnMenuItemClickListener;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.AdapterView.OnItemLongClickListener;
+
+import com.brandao.tipcalc.data.DatabaseHandler;
+import com.brandao.tipcalc.data.SwipeDismissListViewTouchListener.DismissCallbacks;
+import com.brandao.tipcalc.data.Tip;
+import com.brandao.tipcalc.settings.Settings;
+
+public class SavedTipFragment extends Fragment implements DismissCallbacks
+{
+	private static final String TAG = SavedTipFragment.class.getSimpleName();
+
+	private ArrayList<Tip> mTipList;
+
+	private DynamicListView mListView;
+	private EfficientAdapter mAdapter;
+
+	private LinearLayout mErrorLayout;
+	private LinearLayout mLoadingLayout;
+	private LinearLayout mContentLayout;
+	private TextView mErrorText;
+	private ImageView mErrorImage;
+
+	private DatabaseHandler mTipDatabase;
+
+	private ActionMode mActionMode;
+
+	public static SavedTipFragment newInstance()
+	{
+		SavedTipFragment f = new SavedTipFragment();
+
+		return f;
+	}
+
+	@Override
+	public void onCreate(Bundle savedInstanceState)
+	{
+		super.onCreate(savedInstanceState);
+
+		mTipDatabase = ((TipCalc)getActivity().getApplication()).getTipDatabase();
+
+		if (savedInstanceState != null)
+		{
+			mTipList = savedInstanceState.getParcelableArrayList("tips");
+		}
+		else
+		{
+			mTipList = new ArrayList<Tip>();
+		}
+	}
+
+	@Override
+	public void onActivityCreated(Bundle savedInstanceState)
+	{
+		super.onActivityCreated(savedInstanceState);
+
+		mAdapter = new EfficientAdapter(getActivity());
+		AlphaInAnimationAdapter animAdapter = new AlphaInAnimationAdapter(mAdapter);
+		animAdapter.setAbsListView(mListView);
+		assert animAdapter.getViewAnimator() != null;
+		animAdapter.getViewAnimator().setInitialDelayMillis(300);
+		mListView.setAdapter(animAdapter);
+
+		mListView.enableSwipeToDismiss(this);
+		mListView.setOnItemClickListener(new OnItemClickListener() {
+			@Override
+			public void onItemClick(AdapterView<?> arg0, View child, int position, long arg3)
+			{
+				if (mActionMode == null)
+					showActions(child.findViewById(R.id.actions), position);
+				else
+				{
+					mTipList.get(position).checked = !mTipList.get(position).checked;
+					refresh();
+
+					onStartActionMode(getCheckedCount());
+				}
+			}
+		});
+
+		mListView.setOnItemLongClickListener(new OnItemLongClickListener() {
+			@Override
+			public boolean onItemLongClick(AdapterView<?> parent, View child, int position, long id)
+			{
+				mTipList.get(position).checked = !mTipList.get(position).checked;
+				refresh();
+
+				onStartActionMode(getCheckedCount());
+
+				return true;
+			}
+		});
+
+		if (savedInstanceState != null)
+		{
+			mTipList = savedInstanceState.getParcelableArrayList("mTipList");
+			if (mTipList == null)
+				new GetSavedTips().execute();
+			else
+			{
+				refresh();
+
+				if (savedInstanceState.getBoolean("actions"))
+					onStartActionMode(getCheckedCount());
+			}
+		}
+		else
+		{
+			new GetSavedTips().execute();
+		}
+	}
+
+	public void refresh()
+	{
+		if (mTipList != null && mTipList.isEmpty())
+		{
+			mErrorLayout.setVisibility(View.VISIBLE);
+			mContentLayout.setVisibility(View.GONE);
+			((SavedTipActivity)getActivity()).setCount(mTipList.size());
+			mLoadingLayout.setVisibility(View.GONE);
+			mErrorText.setText(getString(R.string.tips_empty));
+			mErrorImage.setImageResource(R.drawable.ic_save_tip);
+		}
+		else if (mTipList == null)
+		{
+			mErrorLayout.setVisibility(View.VISIBLE);
+			mContentLayout.setVisibility(View.GONE);
+			((SavedTipActivity)getActivity()).setCount(0);
+			mLoadingLayout.setVisibility(View.GONE);
+			mErrorText.setText(getString(R.string.unalbe_to_load_tips));
+			mErrorImage.setImageResource(R.drawable.ic_error);
+		}
+		else
+		{
+			SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getActivity());
+			for (int i = 0; i < mTipList.size(); i++)
+			{
+				mTipList.get(i).sortMethod = Integer.parseInt(pref.getString(Settings.PREF_TIP_SORT, "0"));
+			}
+
+			Collections.sort(mTipList);
+			mAdapter.setTips(mTipList);
+			mAdapter.notifyDataSetChanged();
+
+			((SavedTipActivity)getActivity()).setCount(mTipList.size());
+			mErrorLayout.setVisibility(View.GONE);
+			mContentLayout.setVisibility(View.VISIBLE);
+			mLoadingLayout.setVisibility(View.GONE);
+		}
+	}
+
+	private class EfficientAdapter extends BaseAdapter implements Insertable
+	{
+		private LayoutInflater mInflater;
+		private Context mContext;
+		private ArrayList<Tip> mAdapterApps;
+
+		public EfficientAdapter(Context _context)
+		{
+			mInflater = LayoutInflater.from(_context);
+			mContext = _context;
+			mAdapterApps = new ArrayList<Tip>();
+		}
+
+		public void setTips(ArrayList<Tip> list)
+		{
+			mAdapterApps = (ArrayList<Tip>)list.clone();
+		}
+
+		@Override
+		public int getCount()
+		{
+			if (mAdapterApps == null)
+			{
+				return 0;
+			}
+
+			return mAdapterApps.size();
+		}
+
+		@Override
+		public Object getItem(int position)
+		{
+			return position;
+		}
+
+		@Override
+		public long getItemId(int position)
+		{
+			return position;
+		}
+
+		@Override
+		public View getView(final int position, View convertView, ViewGroup parent)
+		{
+			ViewHolder holder;
+
+			if (convertView == null)
+			{
+				convertView = mInflater.inflate(R.layout.tip_list_item, null);
+
+				holder = new ViewHolder();
+
+				holder.basePrice = (TextView)convertView.findViewById(R.id.base_price);
+				holder.split = (TextView)convertView.findViewById(R.id.split);
+				holder.tipOnTax = (TextView)convertView.findViewById(R.id.tip_on_tax);
+				holder.tipRate = (TextView)convertView.findViewById(R.id.tip_rate);
+				holder.tip = (TextView)convertView.findViewById(R.id.tip);
+				holder.total = (TextView)convertView.findViewById(R.id.total);
+				holder.tipSplit = (TextView)convertView.findViewById(R.id.tip_split);
+				holder.totalSplit = (TextView)convertView.findViewById(R.id.total_split);
+				holder.afterTax = (TextView)convertView.findViewById(R.id.after_tax);
+				holder.pop = (ImageView)convertView.findViewById(R.id.actions);
+				holder.background = (RelativeLayout)convertView;
+				holder.afterTaxSplit = (TextView)convertView.findViewById(R.id.after_tax_split);
+
+				convertView.setTag(holder);
+			}
+			else
+			{
+				holder = (ViewHolder)convertView.getTag();
+			}
+
+			holder.basePrice.setText(mAdapterApps.get(position).baseAmount);
+			holder.split.setText(mAdapterApps.get(position).split);
+
+			holder.tipOnTax.setText(mAdapterApps.get(position).tipOnTax + "");
+			holder.tipRate.setText(mAdapterApps.get(position).tipPercent);
+			holder.tip.setText(mAdapterApps.get(position).tipAmount);
+			holder.total.setText(mAdapterApps.get(position).totalAmount);
+			holder.tipSplit.setText(mAdapterApps.get(position).splitTip);
+			holder.totalSplit.setText(mAdapterApps.get(position).splitAmount);
+			holder.afterTax.setText(mAdapterApps.get(position).afterTax);
+			holder.afterTaxSplit.setText(mAdapterApps.get(position).splitAfterTax);
+
+			if (mAdapterApps.get(position).checked)
+				holder.background.setBackgroundResource(R.drawable.app_list_item_background_checked);
+			else
+				holder.background.setBackgroundResource(R.drawable.app_list_item_background_selector);
+
+			holder.pop.setOnClickListener(new OnClickListener() {
+
+				@Override
+				public void onClick(View v)
+				{
+					showActions(v, position);
+				}
+			});
+
+			return convertView;
+		}
+
+		class ViewHolder
+		{
+			TextView basePrice;
+			TextView split;
+			TextView tipOnTax;
+			TextView tipRate;
+			TextView tip;
+			TextView afterTax;
+			TextView total;
+
+			TextView tipSplit;
+			TextView totalSplit;
+			TextView afterTaxSplit;
+
+			ImageView pop;
+			RelativeLayout background;
+		}
+
+		@Override
+		public void add(int index, Object item)
+		{
+			// TODO Auto-generated method stub
+
+		}
+	}
+
+	public boolean isOneChecked()
+	{
+		for (int i = 0; i < mTipList.size(); i++)
+		{
+			if (mTipList.get(i).checked)
+				return true;
+		}
+
+		return false;
+	}
+
+	public int getCheckedCount()
+	{
+		int q = 0;
+		for (int i = 0; i < mTipList.size(); i++)
+		{
+			if (mTipList.get(i).checked)
+				q++;
+		}
+		return q;
+	}
+
+	public void selectAll(boolean select)
+	{
+		for (int i = 0; i < mTipList.size(); i++)
+		{
+			mTipList.get(i).checked = select;
+		}
+
+		refresh();
+
+		if (select)
+			onStartActionMode(getCheckedCount());;
+
+	}
+
+	@Override
+	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
+	{
+		View v = inflater.inflate(R.layout.saved_tip_fragment, container, false);
+
+		mListView = (DynamicListView)v.findViewById(R.id.tip_list);
+		mErrorLayout = (LinearLayout)v.findViewById(R.id.error_container);
+		mContentLayout = (LinearLayout)v.findViewById(R.id.content_container);
+		mLoadingLayout = (LinearLayout)v.findViewById(R.id.loading_container);
+		mErrorText = (TextView)v.findViewById(R.id.error_text);
+		mErrorImage = (ImageView)v.findViewById(R.id.error_image);
+
+		return v;
+	}
+
+	@Override
+	public void onSaveInstanceState(Bundle outState)
+	{
+		super.onSaveInstanceState(outState);
+
+		outState.putParcelableArrayList("mTipList", mTipList);
+		outState.putBoolean("actions", mActionMode != null);
+	}
+
+	public void editTip(int index)
+	{
+		AlertDialog.Builder alert = new AlertDialog.Builder(getActivity());
+		final Tip p = mTipList.get(index);
+
+		LinearLayout title = (LinearLayout)getActivity().getLayoutInflater().inflate(R.layout.custom_dialog_title, null);
+		((TextView)title.findViewById(R.id.title)).setText(getString(R.string.edit_tip));
+		((ImageView)title.findViewById(R.id.icon)).setImageResource(R.drawable.ic_edit);
+		alert.setCustomTitle(title);
+
+		LinearLayout layout = (LinearLayout)getActivity().getLayoutInflater().inflate(R.layout.add_tip_dialog, null);
+		final EditText inputName = (EditText)layout.findViewById(R.id.add_tip_location);
+		inputName.setText(p.location);
+		final EditText inputDesc = (EditText)layout.findViewById(R.id.add_tip_desc);
+		inputDesc.setText(p.comment);
+		alert.setView(layout);
+
+		alert.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int whichButton)
+			{
+				String name = inputName.getText().toString();
+				String desc = inputDesc.getText().toString();
+
+				p.location = name;
+				p.comment = desc;
+
+				new UpdateTip().execute(p);
+
+				Toast.makeText(getActivity(), R.string.tip_saved, Toast.LENGTH_SHORT).show();
+				dialog.dismiss();
+			}
+		});
+
+		alert.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int whichButton)
+			{
+				dialog.dismiss();
+			}
+		});
+
+		alert.create().show();
+	}
+
+	public Intent generateShareIntent(ArrayList<Tip> tips)
+	{
+		Intent intent = new Intent(android.content.Intent.ACTION_SEND);
+
+		String text = "";
+
+		for (int i = 0; i < tips.size(); i++)
+		{
+			text += "I have calculated the following tip:" + "\n" + "\n";
+			text += "Bill: " + tips.get(i).baseAmount + "\n";
+			text += "Date: " + tips.get(i).dateText + "\n";
+			text += "Tip Rate: " + tips.get(i).tipPercent + "\n";
+			text += "Tip on Tax: " + tips.get(i).tipOnTax + "\n";
+
+			text += "Split: " + tips.get(i).split + "\n";
+			text += "Tip Split: " + tips.get(i).splitTip + "\n";
+			text += "Bill After Tax Split: " + tips.get(i).splitAmount + "\n";
+
+			text += "Tip: " + tips.get(i).tipAmount + "\n";
+			text += "Bill After Tax: " + tips.get(i).totalAmount;
+
+			if (i != tips.size() - 1)
+				text += "\n\n";
+		}
+
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+		if (prefs.getBoolean(Settings.PREF_SUPPORT_DEVELOPMENT, true))
+		{
+			text += "\n\n\n\n\nThis information was generated using the Tip Calc Android App:\n"
+			        + "https://market.android.com/details?id=com.brandao.tipcalc&feature=search_result";
+		}
+
+		intent.setAction(Intent.ACTION_SEND);
+		intent.putExtra(Intent.EXTRA_TEXT, text);
+		intent.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.app_name));
+		intent.setType("text/plain");
+
+		return intent;
+	}
+
+	private void showPopupMenu(View v, final int position)
+	{
+		PopupMenu popupMenu = new PopupMenu(getActivity(), v);
+
+		popupMenu.getMenuInflater().inflate(R.menu.single_tip_menu, popupMenu.getMenu());
+
+		popupMenu.setOnMenuItemClickListener(new OnMenuItemClickListener() {
+			@Override
+			public boolean onMenuItemClick(android.view.MenuItem item)
+			{
+				return handlePopUpAction(item.getItemId(), position);
+			}
+		});
+
+		popupMenu.show();
+	}
+
+	public void showActions(View v, final int position)
+	{
+		int currentapiVersion = android.os.Build.VERSION.SDK_INT;
+		if (currentapiVersion >= android.os.Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+		{
+			showPopupMenu(v, position);
+		}
+		else
+		{
+			showActionsDialog(position);
+		}
+	}
+
+	public void showActionsDialog(final int position)
+	{
+		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+		String[] items = null;
+		String title = "";
+
+		items = getResources().getStringArray(R.array.tip_menu_titles);
+		title = getString(R.string.tip);
+
+		builder.setTitle(title);
+		builder.setItems(items, new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int item)
+			{
+				handlePopUpAction(getIdForActionDialog(item), position);
+			}
+		}).show();
+	}
+
+	public int getIdForActionDialog(int index)
+	{
+		int i = -1;
+
+		switch (index)
+		{
+			case 0:
+				i = R.id.action_delete;
+				break;
+			case 1:
+				i = R.id.action_share;
+				break;
+			case 2:
+				i = R.id.action_edit;
+				break;
+			case 3:
+				i = R.id.action_details;
+				break;
+		}
+
+		return i;
+	}
+
+	public static String getDate(long milliSeconds, String dateFormat)
+	{
+		SimpleDateFormat formatter = new SimpleDateFormat(dateFormat);
+
+		Calendar calendar = Calendar.getInstance();
+		calendar.setTimeInMillis(milliSeconds);
+		return formatter.format(calendar.getTime());
+	}
+
+	public void showDetails(int index)
+	{
+		AlertDialog.Builder alert = new AlertDialog.Builder(getActivity());
+		final Tip p = mTipList.get(index);
+
+		LinearLayout title = (LinearLayout)getActivity().getLayoutInflater().inflate(R.layout.custom_dialog_title, null);
+		((TextView)title.findViewById(R.id.title)).setText(getString(R.string.details));
+		((ImageView)title.findViewById(R.id.icon)).setImageResource(R.drawable.ic_info);
+		alert.setCustomTitle(title);
+
+		LinearLayout layout = (LinearLayout)getActivity().getLayoutInflater().inflate(R.layout.details_tip_dialog, null);
+		final TextView inputName = (TextView)layout.findViewById(R.id.location_display);
+		inputName.setText(p.location);
+		final TextView inputDesc = (TextView)layout.findViewById(R.id.desc_display);
+		inputDesc.setText(p.comment);
+		final TextView dateDisplay = (TextView)layout.findViewById(R.id.date_display);
+		dateDisplay.setText(getDate(Long.parseLong(p.ref), "dd/MM/yyyy - hh:mm:ss"));
+		alert.setView(layout);
+
+		alert.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int whichButton)
+			{
+
+			}
+		});
+
+		alert.create().show();
+	}
+
+	public boolean handlePopUpAction(int id, int position)
+	{
+		switch (id)
+		{
+			case R.id.action_delete:
+				mListView.dismiss(position);
+				return true;
+			case R.id.action_share:
+				ArrayList<Tip> temp = new ArrayList<Tip>();
+				temp.add(mTipList.get(position));
+				startActivity(Intent.createChooser(generateShareIntent(temp), "Select..."));
+				return true;
+			case R.id.action_edit:
+				editTip(position);
+				return true;
+			case R.id.action_details:
+				showDetails(position);
+				return true;
+			default:
+				return false;
+		}
+	}
+
+	@Override
+	public void onPause()
+	{
+		super.onPause();
+		UndoBarController.clear(getActivity());
+	}
+
+	private class GetSavedTips extends AsyncTask<Void, Integer, ArrayList<Tip>>
+	{
+		@Override
+		protected ArrayList<Tip> doInBackground(Void... params)
+		{
+			if (!mTipDatabase.isOpen())
+				mTipDatabase.open();
+
+			ArrayList<Tip> TipList;
+			try
+			{
+				TipList = mTipDatabase.getAllTips();
+			}
+			catch (Exception e)
+			{
+				return null;
+			}
+			mTipDatabase.close();
+
+			return TipList;
+		}
+
+		@Override
+		protected void onPostExecute(ArrayList<Tip> result)
+		{
+			mTipList = result;
+			refresh();
+		}
+
+		@Override
+		protected void onPreExecute()
+		{
+			mErrorLayout.setVisibility(View.GONE);
+			mContentLayout.setVisibility(View.GONE);
+			((SavedTipActivity)getActivity()).setCount(0);
+			mLoadingLayout.setVisibility(View.VISIBLE);
+		}
+	}
+
+	private final class AnActionModeOfEpicProportions implements ActionMode.Callback
+	{
+		@Override
+		public boolean onActionItemClicked(ActionMode mode, MenuItem item)
+		{
+			switch (item.getItemId())
+			{
+				case R.id.action_delete_all:
+					ArrayList<Tip> forDelete = new ArrayList<Tip>();
+					ArrayList<Integer> positions = new ArrayList<Integer>();
+					for (int i = 0; i < mTipList.size(); i++)
+					{
+						if (mTipList.get(i).checked)
+						{
+							positions.add(i);
+							forDelete.add(mTipList.get(i));
+							mTipList.remove(i);
+							i--;
+						}
+					}
+
+					new DeleteAllTips().execute(forDelete);
+
+					final Bundle b = new Bundle();
+					b.putInt("action", 1);
+					b.putParcelableArrayList("items", forDelete);
+					b.putIntegerArrayList("positions", positions);
+
+					new UndoBarController.UndoBar(getActivity())
+					        .message(forDelete.size() + " " + getString(forDelete.size() > 0 ? R.string.tips_deleted : R.string.tip_deleted))
+					        .listener(SavedTipFragment.this).token(b).show();
+
+					refresh();
+					mode.finish();
+					return true;
+				case R.id.action_share_all:
+					ArrayList<Tip> selectedr = new ArrayList<Tip>();
+					for (int i = 0; i < mTipList.size(); i++)
+						if (mTipList.get(i).checked)
+							selectedr.add(mTipList.get(i));
+					startActivity(Intent.createChooser(generateShareIntent(selectedr), "Select..."));
+					mode.finish();
+					return true;
+				default:
+					return false;
+			}
+		}
+
+		@Override
+		public boolean onCreateActionMode(ActionMode mode, Menu menu)
+		{
+			MenuInflater inflater = mode.getMenuInflater();
+
+			inflater.inflate(R.menu.multi_tip_menu, menu);
+
+			return true;
+		}
+
+		@Override
+		public void onDestroyActionMode(ActionMode mode)
+		{
+			selectAll(false);
+			mActionMode = null;
+		}
+
+		@Override
+		public boolean onPrepareActionMode(ActionMode mode, Menu menu)
+		{
+			return false;
+		}
+	}
+
+	public void onStartActionMode(int count)
+	{
+		if (count == 0)
+		{
+			mActionMode.finish();
+			return;
+		}
+
+		if (mActionMode == null)
+			mActionMode = ((ActionBarActivity)getActivity()).startSupportActionMode(new AnActionModeOfEpicProportions());
+
+		mActionMode.setTitle(getCheckedCount() == 1 ? "1 Tip Selected" : getCheckedCount() + " Tips Selected");
+	}
+
+	private class UpdateTip extends AsyncTask<Tip, Integer, Boolean>
+	{
+		@Override
+		protected Boolean doInBackground(Tip... params)
+		{
+			if (!mTipDatabase.isOpen())
+				mTipDatabase.open();
+
+			boolean b = mTipDatabase.updateTip(params[0]) == 1;
+
+			mTipDatabase.close();
+
+			return b;
+		}
+
+		@Override
+		protected void onPostExecute(Boolean result)
+		{
+			if (result != null && result.booleanValue())
+			{
+
+			}
+			else
+			{
+
+			}
+		}
+
+		@Override
+		protected void onPreExecute()
+		{
+
+		}
+	}
+
+	private class AddTip extends AsyncTask<Tip, Integer, Boolean>
+	{
+		@Override
+		protected Boolean doInBackground(Tip... params)
+		{
+			if (!mTipDatabase.isOpen())
+				mTipDatabase.open();
+
+			boolean b = mTipDatabase.addTip(params[0]);
+
+			mTipDatabase.close();
+			return b;
+		}
+
+		@Override
+		protected void onPostExecute(Boolean result)
+		{
+			if (result != null && result.booleanValue())
+			{
+
+			}
+			else
+			{
+
+			}
+		}
+
+		@Override
+		protected void onPreExecute()
+		{
+
+		}
+	}
+
+	private class AddAllTips extends AsyncTask<ArrayList<Tip>, Integer, Boolean>
+	{
+		@Override
+		protected Boolean doInBackground(ArrayList<Tip>... params)
+		{
+			if (!mTipDatabase.isOpen())
+				mTipDatabase.open();
+
+			boolean b = true;
+			for (int i = 0; i < params[0].size(); i++)
+			{
+				if (!mTipDatabase.addTip(params[0].get(i)))
+					b = false;
+			}
+
+			mTipDatabase.close();
+			return b;
+		}
+
+		@Override
+		protected void onPostExecute(Boolean result)
+		{
+			if (result != null && result.booleanValue())
+			{
+
+			}
+			else
+			{
+
+			}
+		}
+
+		@Override
+		protected void onPreExecute()
+		{
+
+		}
+	}
+
+	private class DeleteTip extends AsyncTask<Tip, Integer, Boolean>
+	{
+		@Override
+		protected Boolean doInBackground(Tip... params)
+		{
+			if (!mTipDatabase.isOpen())
+				mTipDatabase.open();
+
+			boolean b = mTipDatabase.deleteTip(params[0]);
+
+			mTipDatabase.close();
+			return b;
+		}
+
+		@Override
+		protected void onPostExecute(Boolean result)
+		{
+			if (result != null && result.booleanValue())
+			{
+
+			}
+			else
+			{
+
+			}
+		}
+
+		@Override
+		protected void onPreExecute()
+		{
+
+		}
+	}
+
+	private class DeleteAllTips extends AsyncTask<ArrayList<Tip>, Integer, Boolean>
+	{
+		@Override
+		protected Boolean doInBackground(ArrayList<Tip>... params)
+		{
+			if (!mTipDatabase.isOpen())
+				mTipDatabase.open();
+
+			boolean b = true;
+			for (int i = 0; i < params[0].size(); i++)
+			{
+				if (!mTipDatabase.deleteTip(params[0].get(i)))
+					b = false;
+			}
+
+			mTipDatabase.close();
+			return b;
+		}
+
+		@Override
+		protected void onPostExecute(Boolean result)
+		{
+			if (result != null && result.booleanValue())
+			{
+
+			}
+			else
+			{
+
+			}
+		}
+
+		@Override
+		protected void onPreExecute()
+		{
+
+		}
+	}
+
+	@Override
+	public void onUndo(Parcelable token)
+	{
+		if (token != null)
+		{
+			switch (((Bundle)token).getInt("action"))
+			{
+				case 0:
+					Tip item = ((Bundle)token).getParcelable("item");
+					mTipList.add(((Bundle)token).getInt("index"), item);
+					new AddTip().execute(item);
+					refresh();
+					return;
+				case 1:
+					ArrayList<Integer> positions = ((Bundle)token).getIntegerArrayList("positions");
+					ArrayList<Tip> items = ((Bundle)token).getParcelableArrayList("items");
+
+					for (int i = 0; i < items.size(); i++)
+					{
+						items.get(i).checked = false;
+						mTipList.add(positions.get(i).intValue(), items.get(i));
+					}
+					mDatabase
+					refresh();
+					return;
+			}
+		}
+	}
+
+	@Override
+	public void onHide(Parcelable token)
+	{
+
+	}
+
+	@Override
+	public void onClear()
+	{
+
+	}
+
+	@Override
+	public void onDismiss(ViewGroup listView, int[] reverseSortedPositions)
+	{
+		ArrayList<Tip> forDelete = new ArrayList<Tip>();
+		ArrayList<Integer> positions = new ArrayList<Integer>();
+		int count = 0;
+		for (int i : reverseSortedPositions)
+		{
+			positions.add(i - count);
+			forDelete.add(mTipList.get(i - count));
+			mTipList.remove(i - count);
+			count++;
+		}
+
+		new DeleteAllTips().execute(forDelete);
+
+		final Bundle b = new Bundle();
+		b.putInt("action", 1);
+		b.putParcelableArrayList("items", forDelete);
+		b.putIntegerArrayList("positions", positions);
+
+		new UndoBarController.UndoBar(getActivity())
+		        .message((forDelete.size() > 1 ? forDelete.size() : "") + " " + getString(forDelete.size() > 1 ? R.string.tips_deleted : R.string.tip_deleted))
+		        .listener(SavedTipFragment.this).token(b).show();
+
+		refresh();
+
+		if (mActionMode != null)
+		{
+			int checkedCount = getCheckedCount();
+			onStartActionMode(checkedCount);
+		}
+		else
+		{
+
+		}
+	}
+}
