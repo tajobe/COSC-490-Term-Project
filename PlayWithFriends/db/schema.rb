@@ -11,7 +11,17 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150326064100) do
+ActiveRecord::Schema.define(version: 20150407205636) do
+
+  create_table "servers", force: :cascade do |t|
+    t.string   "owner"
+    t.string   "game_id"
+    t.integer  "up_votes"
+    t.integer  "down_votes"
+    t.text     "title"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
 
   create_table "users", force: :cascade do |t|
     t.string   "email",                  default: "", null: false

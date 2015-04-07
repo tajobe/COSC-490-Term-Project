@@ -1,0 +1,19 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <strong>Owner:</strong>
+  <%= @server.owner %>
+</p>
+
+<p>
+  <strong>Game:</strong>
+  <%= @server.game_id %>
+</p>
+
+<p>
+  <strong>Title:</strong>
+  <%= @server.title %>
+</p>
+
+<%= link_to 'Edit', edit_server_path(@server) %> |
+<%= link_to 'Back', servers_path %>
