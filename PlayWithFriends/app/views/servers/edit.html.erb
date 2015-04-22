@@ -1,6 +1,9 @@
 <h1>Editing Server</h1>
-
-<%= render 'form' %>
+<% if current_user.email == @server.owner %>
+    <%= render 'form' %>
+<% else %>
+    <p>You do not have permission to edit this server!</p>
+<% end %>
 
 <%= link_to 'Show', @server %> |
 <%= link_to 'Back', servers_path %>
