@@ -2,30 +2,28 @@
 
 <h1>Listing Servers</h1>
 
-<table class="table-condensed">
+<table class="table-condensed table-hover">
   <thead class="table-striped">
-    <tr>
-      <th>Owner</th>
-      <th>Game</th>
-      <th>Title</th>
-      <th colspan="4"></th>
-    </tr>
+  <tr>
+    <th>Game</th>
+    <th>Title</th>
+    <th colspan="2"></th>
+  </tr>
   </thead>
 
-  <tbody class="table-bordered">
-    <% @servers.each do |server| %>
-      <tr>
-        <td><%= server.owner %></td>
+  <tbody class="table-bordered" style="cursor: pointer; cursor: hand;">
+  <% @servers.each do |server| %>
+      <tr data-link="<%= server_path(server) %>">
         <td><%= server.game_id %></td>
         <td><%= server.title %></td>
-        <td><%= link_to 'Show', server %></td>
-
         <% if current_user && current_user.email == server.owner %>
-            <td><%= link_to 'Edit', edit_server_path(server) %></td>
-            <td><%= link_to 'Destroy', server, method: :delete, data: { confirm: 'Are you sure?' } %></td>
+            <td><%= link_to 'Edit', edit_server_path(server), :class => "btn btn-default btn-xs" %></td>
+            <td><%= link_to 'Destroy', server, method: :delete, data: {confirm: 'Are you sure?'}, :class => "btn btn-danger btn-xs" %></td>
+        <% else %>
+            <td colspan="2"></td>
         <% end %>
       </tr>
-    <% end %>
+  <% end %>
   </tbody>
 </table>
 

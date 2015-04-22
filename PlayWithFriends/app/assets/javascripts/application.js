@@ -11,7 +11,22 @@
 // about supported directives.
 //
 //= require jquery
+//= require jquery.turbolinks
 //= require jquery_ujs
-//= require turbolinks
 //= require bootstrap-sprockets
+//= require turbolinks
 //= require_tree .
+
+// make <tr>s with "data-link" attribute clickable
+jQuery(function($) {
+    $(document).ready(function() {
+        $("tr[data-link]").click(function (event) {
+            var target = $(event.target);
+
+            // avoid triggering tr click when clicking an actual link
+            if (target.is(":not(a)")) {
+                window.location = $(this).data("link")
+            }
+        });
+    });
+})
