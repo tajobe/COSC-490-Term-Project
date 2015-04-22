@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150407205636) do
+ActiveRecord::Schema.define(version: 20150422223244) do
 
   create_table "servers", force: :cascade do |t|
     t.string   "owner"
@@ -19,8 +19,11 @@ ActiveRecord::Schema.define(version: 20150407205636) do
     t.integer  "up_votes"
     t.integer  "down_votes"
     t.text     "title"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at",                 null: false
+    t.datetime "updated_at",                 null: false
+    t.string   "description"
+    t.string   "ip"
+    t.boolean  "private",     default: true
   end
 
   create_table "users", force: :cascade do |t|

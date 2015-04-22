@@ -1,29 +1,44 @@
 <%= form_for(@server) do |f| %>
-  <% if @server.errors.any? %>
-    <div id="error_explanation">
-      <h2><%= pluralize(@server.errors.count, "error") %> prohibited this server from being saved:</h2>
+    <% if @server.errors.any? %>
+        <div id="error_explanation">
+          <h2><%= pluralize(@server.errors.count, "error") %> prohibited this server from being saved:</h2>
 
-      <ul>
-      <% @server.errors.full_messages.each do |message| %>
-        <li><%= message %></li>
-      <% end %>
-      </ul>
+          <ul>
+            <% @server.errors.full_messages.each do |message| %>
+                <li><%= message %></li>
+            <% end %>
+          </ul>
+        </div>
+    <% end %>
+
+    <table class="table-condensed">
+      <tbody>
+      <tr>
+        <td><%= f.label :owner %></td>
+        <td><%= f.email_field :owner, :value => current_user.email, :readonly => true, :size => 60 %></td>
+      </tr>
+      <tr>
+        <td><%= f.label :game_id %></td>
+        <td><%= f.text_field :game_id, :size => 60 %></td>
+      </tr>
+      <tr>
+        <td><%= f.label :title %></td>
+        <td><%= f.text_field :title, :size => 60 %></td>
+      </tr>
+      <tr>
+        <td><%= f.label :ip %></td>
+        <td>
+          <%= f.text_field :ip, :size => 60 %><br>
+          <%= f.label :private %>&nbsp;<%= f.check_box :private, :value => @server.private %>
+        </td>
+      </tr>
+      <tr>
+        <td><%= f.label :description %></td>
+        <td><%= f.text_area :description, :cols => 60 %></td>
+      </tr>
+      </tbody>
+    </table>
+    <div class="actions">
+      <%= f.submit %>
     </div>
-  <% end %>
-
-  <div class="field">
-    <%= f.label :owner %><br>
-    <%= f.email_field :owner, :value => current_user.email, :readonly => true %>
-  </div>
-  <div class="field">
-    <%= f.label :game_id %><br>
-    <%= f.text_field :game_id %>
-  </div>
-  <div class="field">
-    <%= f.label :title %><br>
-    <%= f.text_area :title %>
-  </div>
-  <div class="actions">
-    <%= f.submit %>
-  </div>
 <% end %>

@@ -70,6 +70,6 @@ class ServersController < ApplicationController
 
     # Never trust parameters from the scary internet, only allow the white list through.
     def server_params
-      params.require(:server).permit(:owner, :game_id, :up_votes, :down_votes, :title)
+      params.require(:server).permit(:owner, :game_id, :up_votes, :down_votes, :title, :description, :ip, :private)
     end
 end

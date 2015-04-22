@@ -15,6 +15,18 @@
   <%= @server.title %>
 </p>
 
+<p>
+  <strong>Description:</strong>
+  <%= @server.description %>
+</p>
+
+<% if !@server.private %>
+    <p>
+      <strong>IP Address:</strong>
+      <%= @server.ip %>
+    </p>
+<% end %>
+
 <% if current_user && current_user.email == @server.owner %>
     <%= link_to 'Edit', edit_server_path(@server) %> |
 <% end %>
