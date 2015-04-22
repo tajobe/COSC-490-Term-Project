@@ -1,5 +1,6 @@
 class ServersController < ApplicationController
   before_action :set_server, only: [:show, :edit, :update, :destroy]
+  before_filter :authenticate_user!, except: [:index, :show]
 
   # GET /servers
   # GET /servers.json

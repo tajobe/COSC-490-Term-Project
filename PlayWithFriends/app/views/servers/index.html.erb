@@ -2,8 +2,8 @@
 
 <h1>Listing Servers</h1>
 
-<table>
-  <thead>
+<table class="table-condensed">
+  <thead class="table-striped">
     <tr>
       <th>Owner</th>
       <th>Game</th>
@@ -12,7 +12,7 @@
     </tr>
   </thead>
 
-  <tbody>
+  <tbody class="table-bordered">
     <% @servers.each do |server| %>
       <tr>
         <td><%= server.owner %></td>

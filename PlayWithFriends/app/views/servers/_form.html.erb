@@ -13,7 +13,7 @@
 
   <div class="field">
     <%= f.label :owner %><br>
-    <%= f.text_field :owner %>
+    <%= f.email_field :owner, :value => current_user.email, :readonly => true %>
   </div>
   <div class="field">
     <%= f.label :game_id %><br>
