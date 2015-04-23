@@ -20,4 +20,13 @@
 # available at http://guides.rubyonrails.org/i18n.html.
 
 en:
-  hello: "Hello world"
+  activerecord:
+      attributes:
+        server:
+          user: "Owner E-mail address"
+      errors:
+        models:
+          server:
+            attributes:
+              user:
+                blank: "not valid or no User found"

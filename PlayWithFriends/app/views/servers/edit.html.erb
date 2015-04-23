@@ -1,5 +1,16 @@
 <h1>Editing Server</h1>
-<% if current_user.email == @server.owner %>
+
+<% if @server.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@server.errors.count, "error") %> prohibited this server from being saved:</h2>
+
+      <ul>
+        <% @server.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+<% elsif current_user.email == @server.owner %>
     <%= render 'form' %>
 <% else %>
     <p>You do not have permission to edit this server!</p>

@@ -1,5 +1,5 @@
 class ServersController < ApplicationController
-  before_action :set_server, only: [:show, :edit, :update, :destroy]
+  before_action :set_server, only: [:show, :edit, :transfer, :update, :destroy]
   before_filter :authenticate_user!, except: [:index, :show]
 
   # GET /servers
@@ -20,6 +20,10 @@ class ServersController < ApplicationController
 
   # GET /servers/1/edit
   def edit
+  end
+
+  # GET /servers/1/transfer
+  def transfer
   end
 
   # POST /servers

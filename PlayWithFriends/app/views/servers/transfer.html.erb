@@ -1,0 +1,18 @@
+<h1>Transfer Server Ownership</h1>
+<% if current_user.email == @server.owner %>
+    <%= form_for(@server) do |f| %>
+        <div class="field">
+          <%= f.label :owner, "New Owner Email" %><br>
+          <%= f.email_field :owner, :value => current_user.email, :size => 60 %>
+        </div>
+
+        <div class="actions">
+          <%= f.submit data: { confirm: "Are you sure your wish to transfer ownership of the server?" } %>
+        </div>
+    <% end %>
+<% else %>
+    <p>You do not have permission to edit this server!</p>
+<% end %>
+
+<%= link_to 'Show', @server %> |
+<%= link_to 'Back', servers_path %>

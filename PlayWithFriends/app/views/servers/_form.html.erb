@@ -15,7 +15,13 @@
       <tbody>
       <tr>
         <td><%= f.label :owner %></td>
-        <td><%= f.email_field :owner, :value => current_user.email, :readonly => true, :size => 60 %></td>
+        <td>
+          <%= f.email_field :owner, :value => current_user.email, :readonly => true, :size => 60 %>
+
+          <% if !@server.new_record? %>
+            <%= link_to 'Transfer', transfer_server_path(@server), :class => "btn btn-danger btn-xs" %>
+          <% end %>
+        </td>
       </tr>
       <tr>
         <td><%= f.label :game_id %></td>
