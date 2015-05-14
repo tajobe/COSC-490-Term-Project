@@ -5,7 +5,7 @@ class ServersController < ApplicationController
   # GET /servers
   # GET /servers.json
   def index
-    @servers = Server.all
+    @servers = params[:game] ? Server.where(game_id: params[:game]) : Server.all
   end
 
   # GET /servers/1

@@ -1,4 +1,4 @@
-<h1>Listing Servers</h1>
+<h1>Listing <%= params[:game] ? Game.find_by_id(params[:game]).name : '' %> Servers</h1>
 
 <table class="table table-condensed table-hover">
   <thead>
@@ -13,7 +13,7 @@
   <tbody style="cursor: pointer; cursor: hand;">
   <% @servers.each do |server| %>
       <tr data-link="<%= server_path(server) %>">
-        <td><%= server.game_id %></td>
+        <td><%= Game.find_by_id(server.game_id).name %></td>
         <td><%= server.title %></td>
         <td><%= server.private? ? raw("Invite-Only") : raw("Public") %></td>
         <% if current_user && current_user.email == server.owner %>

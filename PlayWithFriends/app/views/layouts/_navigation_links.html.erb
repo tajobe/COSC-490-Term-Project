@@ -1,4 +1,14 @@
 <%# add navigation links to this file %>
+<li role="presentation" class="dropdown">
+  <a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-expanded="false">
+    Games <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <% Game.all.each do |g| %>
+    <li><%= link_to g.name, filter_game_path(g.id) %></li>
+    <% end %>
+  </ul>
+</li>
 <% if user_signed_in? %>
     <li>
       <a href="<%= invites_path %>">Invites <span class="badge alert-info">
