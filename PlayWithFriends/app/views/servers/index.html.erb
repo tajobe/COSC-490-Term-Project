@@ -1,7 +1,7 @@
 <h1>Listing Servers</h1>
 
-<table class="table-condensed table-hover">
-  <thead class="table-striped">
+<table class="table table-condensed table-hover">
+  <thead>
   <tr>
     <th>Game</th>
     <th>Title</th>
@@ -10,7 +10,7 @@
   </tr>
   </thead>
 
-  <tbody class="table-bordered" style="cursor: pointer; cursor: hand;">
+  <tbody style="cursor: pointer; cursor: hand;">
   <% @servers.each do |server| %>
       <tr data-link="<%= server_path(server) %>">
         <td><%= server.game_id %></td>

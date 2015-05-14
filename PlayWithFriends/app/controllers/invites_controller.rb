@@ -1,11 +1,12 @@
 class InvitesController < ApplicationController
-  before_action :set_invite, only: [:show, :edit, :destroy]
+  before_action :set_invite, only: [:show, :edit, :respond, :destroy]
   before_filter :authenticate_user!
 
   # GET /invites
   # GET /invites.json
   def index
-    @invites = Invite.all
+    @incoming = Invite.where("to_id = '" + current_user.id.to_s + "'")
+    @outgoing = Invite.where("from_id = '" + current_user.id.to_s + "'")
   end
 
   # GET /invites/1
@@ -20,6 +21,22 @@ class InvitesController < ApplicationController
 
   # GET /invites/1/edit
   def edit
+  end
+
+  def respond
+    @invite = Invite.find_by_id(params[:id])
+    @invite.accepted=params[:response]
+    @invite.active=false
+
+    respond_to do |format|
+      if @invite.save
+        format.html { redirect_to invite_path(@invite), notice: 'Invite ' + (@invite.accepted? ? 'accepted' : 'rejected') + '!' }
+        format.json { render :show, status: :ok, location: @invite }
+      else
+        format.html { redirect_to invite_path(@invite), alert: @invite.errors.full_messages.to_sentence }
+        format.json { render json: @invite.errors, status: :unprocessable_entity }
+      end
+    end
   end
 
   # POST /invites
@@ -50,13 +67,13 @@ class InvitesController < ApplicationController
   end
 
   private
-    # Use callbacks to share common setup or constraints between actions.
-    def set_invite
-      @invite = Invite.find(params[:id])
-    end
+  # Use callbacks to share common setup or constraints between actions.
+  def set_invite
+    @invite = Invite.find(params[:id])
+  end
 
-    # Never trust parameters from the scary internet, only allow the white list through.
-    def invite_params
-      params.require(:invite).permit(:to_id, :from_id, :server_id, :message, :read, :active, :accepted)
-    end
+  # Never trust parameters from the scary internet, only allow the white list through.
+  def invite_params
+    params.require(:invite).permit(:to_id, :from_id, :server_id, :message, :read, :active, :accepted)
+  end
 end
