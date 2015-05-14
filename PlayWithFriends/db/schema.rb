@@ -11,7 +11,19 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150422223244) do
+ActiveRecord::Schema.define(version: 20150507153518) do
+
+  create_table "invites", force: :cascade do |t|
+    t.integer  "to_id"
+    t.integer  "from_id"
+    t.integer  "server_id"
+    t.string   "message"
+    t.boolean  "read"
+    t.boolean  "active"
+    t.boolean  "accepted"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
 
   create_table "servers", force: :cascade do |t|
     t.string   "owner"

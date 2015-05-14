@@ -1,0 +1,21 @@
+<p>
+  <strong>To:</strong>
+  <%= Server.find_by_id(@invite.server_id).title %>
+</p>
+
+<p>
+  <strong>Message:</strong>
+  <%= @invite.message %>
+</p>
+
+<p>
+  <strong>Active:</strong>
+  <%= @invite.active %>
+</p>
+
+<p>
+  <strong>Accepted:</strong>
+  <%= @invite.accepted %>
+</p>
+
+<%= link_to 'Back', servers_path %>

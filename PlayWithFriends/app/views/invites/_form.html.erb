@@ -1,0 +1,31 @@
+<%= form_for(@invite) do |f| %>
+  <% if @invite.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@invite.errors.count, "error") %> prohibited this invite from being saved:</h2>
+
+      <ul>
+      <% @invite.errors.full_messages.each do |message| %>
+        <li><%= message %></li>
+      <% end %>
+      </ul>
+    </div>
+  <% end %>
+  <% @server = Server.find(params[:server_id]) %>
+
+  <div class="field">
+    <%= f.label :to_id, "Request Invite to server '" + @server.title + "'" %><br>
+    <%= f.hidden_field :server_id, :value => @server.id, :readonly => true %>
+    <%= f.hidden_field :to_id, :value => User.find_by_email(@server.owner).id, :readonly => true %>
+    <%= f.hidden_field :from_id, :value => current_user.id, :readonly => true %>
+    <%= f.hidden_field :read, :value => false, :readonly => true %>
+    <%= f.hidden_field :active, :value => true, :readonly => true %>
+    <%= f.hidden_field :accepted, :value => false, :readonly => true %>
+  </div>
+  <div class="field">
+    <%= f.label :message %><br>
+    <%= f.text_field :message %>
+  </div>
+  <div class="actions">
+    <%= f.submit %>
+  </div>
+<% end %>
