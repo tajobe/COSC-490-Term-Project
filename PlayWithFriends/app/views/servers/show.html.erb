@@ -86,11 +86,11 @@
         <% @invite = Invite.find_by(from_id: current_user.id, server_id: @server.id) %>
 
         <% if @invite == nil %>
-            <%= link_to 'Request Invite', invite_to_server_path(@server) %>
+            <%= link_to 'Request Invite', invite_to_server_path(@server), {:class => 'btn btn-primary'} %>
         <% else %>
             <%= link_to 'Check Invite Status', invite_path(Invite.find_by(from_id: current_user.id, server_id: @server.id)), :class => 'btn btn-info' %>
             <br><br>
         <% end %>
     <% end %>
 <% end %>
-<%= link_to 'Back', servers_path %>
+<%= link_to 'Back', servers_path, {:class => 'btn btn-default'} %>

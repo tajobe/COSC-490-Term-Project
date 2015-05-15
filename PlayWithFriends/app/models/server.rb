@@ -3,4 +3,7 @@ class Server < ActiveRecord::Base
   belongs_to :game, :primary_key => "id", :foreign_key => "game_id", :required => true
   has_many :invites
   has_many :reputations
+
+  validates :title, :description, :ip, :private, presence: true
+  validates :title, :ip, uniqueness: true
 end

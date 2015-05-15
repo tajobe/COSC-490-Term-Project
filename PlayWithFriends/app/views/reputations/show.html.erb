@@ -10,7 +10,7 @@
     <div class="row">
       <div class="col-sm-2"><strong>From</strong></div>
       <div class="col-sm-10">
-        <%= @from.email %><br>
+        <%= link_to @from.email, user_path(@from) %><br>
         <%= (@from.email == @server.owner ? 'Owner of ' : 'Player on ') %>
         <%= link_to(@server.title, server_path(@server)).html_safe %>
       </div>
@@ -30,5 +30,5 @@
     </div>
   </div>
 </div>
-<%= link_to 'Edit', edit_reputation_path(@reputation), {:class => 'btn btn-warning'} %> |
+<%= link_to 'Edit', edit_reputation_path(@reputation), {:class => 'btn btn-warning'} %>&nbsp;
 <%= link_to 'Back', reputations_path, {:class => 'btn btn-default'} %>
