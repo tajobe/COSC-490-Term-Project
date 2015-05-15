@@ -49,10 +49,11 @@
              elsif (!invite.active? && !invite.accepted?)
                @class = "danger"
              end
+             @server = Server.find_by_id(invite.server_id);
           %>
           <tr class="<%= @class %>" data-link="<%= invite_path(invite) %>">
-            <td><%= Server.find_by_id(invite.server_id).title %></td>
-            <td><%= User.find_by_id(invite.from_id).email %></td>
+            <td><%= @server.title %></td>
+            <td><%= @server.owner %></td>
           </tr>
       <% end %>
       </tbody>
