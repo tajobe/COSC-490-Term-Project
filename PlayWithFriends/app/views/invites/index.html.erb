@@ -20,10 +20,16 @@
              elsif (!invite.active? && !invite.accepted?)
                @class = "danger"
              end
+             @server = Server.find_by_id(invite.server_id)
+
+             if (@server == nil)
+               @server = Server.new
+               @server.title='Deleted'
+             end
           %>
           <tr class="<%= @class %>" data-link="<%= invite_path(invite) %>">
             <td><%= User.find_by_id(invite.from_id).email %></td>
-            <td><%= Server.find_by_id(invite.server_id).title %></td>
+            <td><%= @server.title %></td>
           </tr>
       <% end %>
       </tbody>
@@ -49,7 +55,13 @@
              elsif (!invite.active? && !invite.accepted?)
                @class = "danger"
              end
-             @server = Server.find_by_id(invite.server_id);
+             @server = Server.find_by_id(invite.server_id)
+
+             if (@server == nil)
+               @server = Server.new
+               @server.title='Deleted'
+               @server.owner='Unknown'
+             end
           %>
           <tr class="<%= @class %>" data-link="<%= invite_path(invite) %>">
             <td><%= @server.title %></td>

@@ -1,15 +1,4 @@
 <%= form_for(@reputation) do |f| %>
-    <% if @reputation.errors.any? %>
-        <div id="error_explanation">
-          <h2><%= pluralize(@reputation.errors.count, "error") %> prohibited this reputation from being saved:</h2>
-
-          <ul>
-            <% @reputation.errors.full_messages.each do |message| %>
-                <li><%= message %></li>
-            <% end %>
-          </ul>
-        </div>
-    <% end %>
     <%
        if (@reputation.new_record?)
          @invite = Invite.find_by_id(params[:invite])

@@ -1,5 +1,13 @@
 <h1>New Invite</h1>
 
-<%= render 'form' %>
-
+<% @server = Server.find_by_id(params[:server_id])
+   if (@server == nil) %>
+    <div class="alert alert-danger">No server selected!</div>
+<% elsif (@server.owner == current_user.email) %>
+    <div class="alert alert-danger">You cannot request invite to your own server!</div>
+<% elsif (Invite.find_by(from_id: current_user.id, server_id: @server.id) != nil) %>
+    <div class="alert alert-danger">You already have an invite open to this server!</div>
+<% else %>
+    <%= render 'form' %>
+<% end %>
 <%= link_to 'Back', invites_path %>

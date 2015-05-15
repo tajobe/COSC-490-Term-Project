@@ -50,6 +50,12 @@
       <tbody style="cursor: pointer; cursor: hand;">
       <% @to.each do |reputation|
         @server = Server.find_by_id(reputation.server_id)
+
+        # temp server
+        if (@server == nil)
+          @server = Server.new
+          @server.title='Deleted'
+          end
          @user = User.find_by_id(reputation.from_id)
       %>
           <tr data-link="<%= reputation_path(reputation) %>">

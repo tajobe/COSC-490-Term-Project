@@ -1,6 +1,20 @@
 <h1>Editing Reputation</h1>
 
-<%= render 'form' %>
+<% if @reputation.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@reputation.errors.count, "error") %> prohibited this reputation from being saved:</h2>
+
+      <ul>
+        <% @reputation.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+<% elsif current_user.id == @reputation.from_id %>
+    <%= render 'form' %>
+<% else %>
+    <p>You do not have permission to edit this reputation!</p>
+<% end %>
 
 <%= link_to 'Show', @reputation %> |
 <%= link_to 'Back', reputations_path %>

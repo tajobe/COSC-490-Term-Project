@@ -81,7 +81,7 @@
 </div>
 <% if current_user %>
     <% if current_user.email == @server.owner %>
-        <%= link_to 'Edit', edit_server_path(@server) %> | <%= link_to 'Destroy', @server, method: :delete, data: {confirm: 'Are you sure?'} %> |
+        <%= link_to 'Edit', edit_server_path(@server), {:class => 'btn btn-warning'} %>&nbsp;<%= link_to 'Destroy', @server, method: :delete, :class => 'btn btn-danger', data: {confirm: 'Are you sure?'} %>
     <% elsif @server.private? %>
         <% @invite = Invite.find_by(from_id: current_user.id, server_id: @server.id) %>
 

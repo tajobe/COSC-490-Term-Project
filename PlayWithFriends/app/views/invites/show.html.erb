@@ -2,9 +2,11 @@
 <div class="panel panel-primary">
   <div class="panel-heading"><h3 class="panel-title">View Invite</h3></div>
   <div class="panel-body">
-    <%
-       @invite.read=true
-       @invite.save
+    <% # when read by invite's target, mark as read
+       if (current_user.id == @invite.to_id)
+         @invite.read=true
+         @invite.save
+       end
 
        if (@invite.to_id == current_user.id)
          @to = User.find_by_id(@invite.from_id)
@@ -26,7 +28,7 @@
           <% (5 - @rating).times do |i| %>
               <span class="glyphicon glyphicon-star-empty" aria-hidden="true"></span>
           <% end %>
-          &nbsp;(<%= link_to 'View', user_path(@to)%>)
+          &nbsp;(<%= link_to 'View', user_path(@to) %>)
         </div>
     <%
        end
@@ -55,7 +57,7 @@
           </div>
         </div>
         <%= if (@invite.accepted?)
-              link_to 'Rate Server', rate_path(@invite), {:class => "btn btn-primary"}
+              link_to 'Rate User', rate_path(@invite), {:class => "btn btn-primary"}
             end
         %>
     <% else %>

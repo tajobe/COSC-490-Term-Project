@@ -11,8 +11,11 @@
       <div class="col-sm-2"><strong>From</strong></div>
       <div class="col-sm-10">
         <%= link_to @from.email, user_path(@from) %><br>
-        <%= (@from.email == @server.owner ? 'Owner of ' : 'Player on ') %>
-        <%= link_to(@server.title, server_path(@server)).html_safe %>
+        <%= if (!@server == nil)
+              (@from.email == @server.owner ? 'Owner of ' : 'Player on ')
+              link_to(@server.title, server_path(@server)).html_safe
+            end
+        %>
       </div>
       <div class="col-sm-2"><strong>Rating</strong></div>
       <div class="col-sm-10">
