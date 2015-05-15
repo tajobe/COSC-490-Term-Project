@@ -8,11 +8,6 @@ class CreateGames < ActiveRecord::Migration
       t.timestamps null: false
     end
 
-    reversible do |dir|
-      change_table :servers do |t|
-        dir.up   { t.change :game_id, :integer }
-        dir.down { t.change :game_id, :string }
-      end
-    end
+    change_column :servers, :game_id, 'integer USING CAST(game_id AS integer)'
   end
 end

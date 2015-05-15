@@ -4,6 +4,6 @@ class Server < ActiveRecord::Base
   has_many :invites
   has_many :reputations
 
-  validates :title, :description, :ip, :private, presence: true
+  validates :title, :description, :ip, presence: true
   validates :title, :ip, uniqueness: true
 end
