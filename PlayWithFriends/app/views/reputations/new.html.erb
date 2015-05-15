@@ -1,5 +1,15 @@
 <h1>New Reputation</h1>
 
-<%= render 'form' %>
-
-<%= link_to 'Back', invite_path(params[:invite]) %>
+<% if (params[:invite] == nil) %>
+    <div class="alert alert-danger">No invite for rating!</div>
+<% else
+     @invite = Invite.find_by_id(params[:invite])
+     @from = current_user.id
+     @to = (@invite.to_id == @from ? @invite.from_id : @invite.to_id)
+     if (Reputation.find_by(server_id: @invite.server_id, from_id: @from, to_id: @to) != nil) %>
+        <div class="alert alert-danger">You have already rated this user!</div>
+    <% else %>
+        <%= render 'form' %>
+    <% end %>
+<% end %>
+    <%= link_to 'Back', invite_path(params[:invite]) %>
