@@ -1,6 +1,6 @@
 class CreateInvites < ActiveRecord::Migration
   def change
-    drop_table :invites
+    drop_table :invites if ActiveRecord::Base.connection.table_exists? :invites
     create_table :invites do |t|
       t.integer :to_id
       t.integer :from_id

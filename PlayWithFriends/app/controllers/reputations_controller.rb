@@ -1,5 +1,6 @@
 class ReputationsController < ApplicationController
   before_action :set_reputation, only: [:show, :edit, :update]
+  before_filter :authenticate_user!
 
   # GET /reputations
   # GET /reputations.json

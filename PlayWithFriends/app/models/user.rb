@@ -9,9 +9,4 @@ class User < ActiveRecord::Base
 
   validates :name, :email, presence: true
   validates :email, uniqueness: true
-
-  validates :email, allow_blank: false, format: {
-                      with: %r{\\@\Z}i,
-                      message: 'must be a valid email with an @'
-                  }
 end
