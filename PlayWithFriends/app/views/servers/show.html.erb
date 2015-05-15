@@ -16,9 +16,9 @@
 
 <p>
   <strong>Description:</strong>
-  <div class="container-fluid">
-    <pre class="pull-left"><%= @server.description %></pre>
-  </div>
+<div class="container-fluid">
+  <pre class="pull-left"><%= @server.description %></pre>
+</div>
 </p>
 
 <% if !@server.private %>
@@ -28,11 +28,18 @@
     </p>
 <% end %>
 
-<% if current_user && current_user.email == @server.owner %>
-    <%= link_to 'Edit', edit_server_path(@server) %> | <%= link_to 'Destroy', @server, method: :delete, data: {confirm: 'Are you sure?'} %> |
-<% elsif current_user && Invite.find_by(from_id: current_user.id, server_id: @server.id) == nil %>
-    <%= link_to 'Request Invite', invite_to_server_path(@server) %>
-<% elsif current_user %>
-    Invite already requested.<br><br>
+<% if current_user %>
+    <% if current_user.email == @server.owner %>
+        <%= link_to 'Edit', edit_server_path(@server) %> | <%= link_to 'Destroy', @server, method: :delete, data: {confirm: 'Are you sure?'} %> |
+    <% elsif @server.private? %>
+        <% @invite = Invite.find_by(from_id: current_user.id, server_id: @server.id) %>
+        
+        <% if @invite == nil %>
+            <%= link_to 'Request Invite', invite_to_server_path(@server) %>
+        <% else %>
+            <%= link_to 'Check Invite Status', invite_path(Invite.find_by(from_id: current_user.id, server_id: @server.id)), :class => 'btn btn-info' %>
+            <br><br>
+        <% end %>
+    <% end %>
 <% end %>
 <%= link_to 'Back', servers_path %>
