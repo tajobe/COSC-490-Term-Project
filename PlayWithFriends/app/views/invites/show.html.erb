@@ -1,51 +1,86 @@
-<%
-   @invite.read=true
-   @invite.save
+<br>
+<div class="panel panel-primary">
+  <div class="panel-heading"><h3 class="panel-title">View Invite</h3></div>
+  <div class="panel-body">
+    <%
+       @invite.read=true
+       @invite.save
 
-   if (@invite.to_id == current_user.id)
-%>
-    <p><strong>From:</strong><%= User.find_by_id(@invite.from_id).email %></p>
-<%
-   end
-   @server = Server.find_by_id(@invite.server_id)
-%>
-<p>
-  <strong>To:</strong>
-  <%= @server.title %>
-</p>
+       if (@invite.to_id == current_user.id)
+         @to = User.find_by_id(@invite.from_id)
+    %>
+        <div class="col-sm-2"><strong>From</strong></div>
+        <div class="col-sm-10"><%= link_to @to.email, user_path(@to) %></div>
 
-<p>
-  <strong>Message:</strong>
-<div class="container-fluid">
-  <pre class="pull-left"><%= @invite.message %></pre>
-</div>
-</p>
+        <div class="col-sm-2"><strong>Average Rating</strong></div>
+        <div class="col-sm-10">
+          <%
+             @rating = Reputation.includes(:server).references(:servers).where.not(servers: {owner: @to.email}).where(to_id: @to.id,).average(:rating).to_f
 
-<% if (@invite.to_id == current_user.id) %>
-    <div class="panel panel-default">
-      <div class="panel-heading"><h3 class="panel-title"><%= @invite.active? ? 'Respond' : 'Change Response' %></h3>
-      </div>
-      <div class="panel-body">
+             # noinspection RubyArgCount
+             @rating = @rating.round.to_i
+          %>
+          <% @rating.times do |i| %>
+              <span class="glyphicon glyphicon-star" aria-hidden="true"></span>
+          <% end %>
+          <% (5 - @rating).times do |i| %>
+              <span class="glyphicon glyphicon-star-empty" aria-hidden="true"></span>
+          <% end %>
+          &nbsp;(<%= link_to 'View', user_path(@to)%>)
+        </div>
+    <%
+       end
+       @server = Server.find_by_id(@invite.server_id)
+    %>
 
-        <%= link_to @invite.accepted? ? 'Accepted' : 'Accept', invite_response_path(@invite.id, 'true'), {:class => 'btn ' + (@invite.active? || @invite.accepted? ? 'btn-success' : 'btn-default')} %>
-        <%= link_to !@invite.accepted? && !@invite.active? ? 'Rejected' : 'Reject', invite_response_path(@invite.id, 'false'), {:class => 'btn ' + (@invite.active? || !@invite.accepted? ? 'btn-danger' : 'btn-default')} %>
-      </div>
+    <div class="col-sm-2"><strong>To</strong></div>
+    <div class="col-sm-10"><%= @server.title %></div>
+
+    <div class="col-sm-2"><strong>Message</strong></div>
+    <div class="col-sm-10">
+      <pre><%= @invite.message %></pre>
     </div>
-<% else %>
-    <p><strong>Status:</strong>
-      <%=
-          if (@invite.active?)
-            'Awaiting Response'
-          elsif (@invite.accepted?)
-            'Accepted!'
-          else
-            'Rejected.'
-          end
-      %>
-    </p>
-    <% if (@invite.accepted?) %>
-        <p><strong>IP Address:</strong> <%= @server.ip %></p>
+
+    <% if (@invite.to_id == current_user.id) %>
+        <div class="container-fluid">
+          <div class="panel panel-info">
+            <div class="panel-heading">
+              <h3 class="panel-title"><%= @invite.active? ? 'Respond' : 'Change Response' %></h3>
+            </div>
+            <div class="panel-body">
+
+              <%= link_to @invite.accepted? ? 'Accepted' : 'Accept', invite_response_path(@invite.id, 'true'), {:class => 'btn ' + (@invite.active? || @invite.accepted? ? 'btn-success' : 'btn-default')} %>
+              <%= link_to !@invite.accepted? && !@invite.active? ? 'Rejected' : 'Reject', invite_response_path(@invite.id, 'false'), {:class => 'btn ' + (@invite.active? || !@invite.accepted? ? 'btn-danger' : 'btn-default')} %>
+            </div>
+          </div>
+        </div>
+        <%= if (@invite.accepted?)
+              link_to 'Rate Server', rate_path(@invite), {:class => "btn btn-primary"}
+            end
+        %>
+    <% else %>
+        <div class="col-sm-2"><strong>Status</strong></div>
+        <div class="col-sm-10">
+          <%=
+              if (@invite.active?)
+                '<div class="alert alert-warning" role="alert">Awaiting Response</div>'.html_safe
+              elsif (@invite.accepted?)
+                '<div class="alert alert-success" role="alert">Accepted!</div>'.html_safe
+              else
+                '<div class="alert alert-danger" role="alert">Rejected.</div>'.html_safe
+              end
+          %>
+        </div>
+        <% if (@invite.accepted?) %>
+            <div class="col-sm-2"><strong>IP Address</strong></div>
+            <div class="col-sm-10"><%= @server.ip %></div>
+
+            <div class="col-sm-12">&nbsp;</div>
+            <div class="col-sm-12"><%= link_to 'Rate Server', rate_path(@invite), {:class => "btn btn-primary"} %></div>
+        <% end %>
+
     <% end %>
 
-<% end %>
+  </div>
+</div>
 <%= link_to 'Back', invites_path, {:class => "btn btn-default"} %>

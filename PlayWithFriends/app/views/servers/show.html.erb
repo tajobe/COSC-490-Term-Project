@@ -1,39 +1,90 @@
-<p>
-  <strong>Owner:</strong>
-  <%= @server.owner %>
-</p>
+<% @owner = User.find_by_email(@server.owner) %>
+<h1>View Server</h1>
+<div class="panel panel-primary">
+  <div class="panel-heading">
+    <h3 class="panel-title"><%= @server.title + '(' + (@server.private? ? 'Invite-Only' : 'Public') + ')' %></h3>
+  </div>
+  <div class="panel-body">
+    <div class="col-sm-2"><strong>Owner</strong></div>
+    <div class="col-sm-10"><%= link_to(@server.owner, user_path(@owner)) %></div>
 
-<p>
-  <strong>Game:</strong>
-  <% @game = Game.find_by_id(@server.game_id) %>
-  <%= ('<a href="' + @game.website + '" target="_blank">' + @game.name + '</a>').html_safe %>
-</p>
+    <div class="col-sm-2"><strong>Game</strong></div>
+    <div class="col-sm-10">
+      <% @game = Game.find_by_id(@server.game_id) %>
+      <%= ('<a href="' + @game.website + '" target="_blank">' + @game.name + '</a>').html_safe %>
+    </div>
 
-<p>
-  <strong>Title:</strong>
-  <%= @server.title %>
-</p>
+    <div class="col-sm-2"><strong>Description</strong></div>
+    <div class="col-sm-10">
+      <pre><%= @server.description %></pre>
+    </div>
 
-<p>
-  <strong>Description:</strong>
-<div class="container-fluid">
-  <pre class="pull-left"><%= @server.description %></pre>
+    <% if !@server.private %>
+        <div class="col-sm-2"><strong>IP Address</strong></div>
+        <div class="col-sm-10"><%= @server.ip %></div>
+    <% end %>
+
+    <%
+       @rating = Reputation.where(to_id: @owner.id, server_id: @server.id).average(:rating).to_f
+
+       # noinspection RubyArgCount
+       @rating = @rating.round.to_i
+    %>
+
+    <div class="col-sm-2"><strong>Average Rating</strong></div>
+    <div class="col-sm-10">
+      <% @rating.times do |i| %>
+          <span class="glyphicon glyphicon-star" aria-hidden="true"></span>
+      <% end %>
+      <% (5 - @rating).times do |i| %>
+          <span class="glyphicon glyphicon-star-empty" aria-hidden="true"></span>
+      <% end %>
+    </div>
+  </div>
 </div>
-</p>
+<div class="panel panel-info">
+  <div class="panel-heading">
+    <h3 class="panel-title">Reputation</h3>
+  </div>
+  <div class="panel-body">
+    <div class="container-fluid">
+      <%
+         @reputations = Reputation.where(server_id: @server.id, to_id: User.find_by_email(@server.owner))
+         @reputations.each do |rep|
+           @rating = rep.rating
+           @from = User.find_by_id(rep.from_id)
+      %>
 
-<% if !@server.private %>
-    <p>
-      <strong>IP Address:</strong>
-      <%= @server.ip %>
-    </p>
-<% end %>
-
+          <div class="row">
+            <div class="col-sm-2"><strong>From</strong></div>
+            <div class="col-sm-10">
+              <%= link_to(@from.email, user_path(@from)) %>
+            </div>
+            <div class="col-sm-2"><strong>Rating</strong></div>
+            <div class="col-sm-10">
+              <% @rating.times do |i| %>
+                  <span class="glyphicon glyphicon-star" aria-hidden="true"></span>
+              <% end %>
+              <% (5 - @rating).times do |i| %>
+                  <span class="glyphicon glyphicon-star-empty" aria-hidden="true"></span>
+              <% end %>
+            </div>
+            <div class="col-sm-2"><strong>Message</strong></div>
+            <div class="col-sm-10">
+              <pre><%= rep.message %></pre>
+            </div>
+          </div>
+          <hr>
+      <% end %>
+    </div>
+  </div>
+</div>
 <% if current_user %>
     <% if current_user.email == @server.owner %>
         <%= link_to 'Edit', edit_server_path(@server) %> | <%= link_to 'Destroy', @server, method: :delete, data: {confirm: 'Are you sure?'} %> |
     <% elsif @server.private? %>
         <% @invite = Invite.find_by(from_id: current_user.id, server_id: @server.id) %>
-        
+
         <% if @invite == nil %>
             <%= link_to 'Request Invite', invite_to_server_path(@server) %>
         <% else %>

@@ -1,5 +1,5 @@
 class InvitesController < ApplicationController
-  before_action :set_invite, only: [:show, :edit, :respond, :destroy]
+  before_action :set_invite, only: [:show, :respond, :destroy]
   before_filter :authenticate_user!
 
   # GET /invites
@@ -17,10 +17,6 @@ class InvitesController < ApplicationController
   # GET /invites/new
   def new
     @invite = Invite.new
-  end
-
-  # GET /invites/1/edit
-  def edit
   end
 
   def respond

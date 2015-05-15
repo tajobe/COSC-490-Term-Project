@@ -1,0 +1,73 @@
+<h1>Reputation</h1>
+<div class="panel panel-primary">
+  <div class="panel-heading"><h3 class="panel-title">Reputation Given By You</h3></div>
+  <div class="panel-body">
+    <table class="table table-condensed table-hover">
+      <thead>
+      <tr>
+        <th>To</th>
+        <th>Server</th>
+        <th>Your Role</th>
+        <th>Rating</th>
+      </tr>
+      </thead>
+
+      <tbody style="cursor: pointer; cursor: hand;">
+      <% @from.each do |reputation|
+        @server = Server.find_by_id(reputation.server_id)
+      %>
+          <tr data-link="<%= reputation_path(reputation) %>">
+            <td><%= User.find_by_id(reputation.to_id).email %></td>
+            <td><%= @server.title %></td>
+            <td><%= @server.owner == current_user.email ? 'Owner' : 'Player' %></td>
+            <td>
+              <% reputation.rating.times do |i| %>
+                  <span class="glyphicon glyphicon-star" aria-hidden="true"></span>
+              <% end %>
+              <% (5 - reputation.rating).times do |i| %>
+                  <span class="glyphicon glyphicon-star-empty" aria-hidden="true"></span>
+              <% end %>
+            </td>
+          </tr>
+      <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<div class="panel panel-primary">
+  <div class="panel-heading"><h3 class="panel-title">Reputation Given To You</h3></div>
+  <div class="panel-body">
+    <table class="table table-condensed table-hover">
+      <thead>
+      <tr>
+        <th>From</th>
+        <th>Server</th>
+        <th>Their Role</th>
+        <th>Rating</th>
+      </tr>
+      </thead>
+
+      <tbody style="cursor: pointer; cursor: hand;">
+      <% @to.each do |reputation|
+        @server = Server.find_by_id(reputation.server_id)
+         @user = User.find_by_id(reputation.from_id)
+      %>
+          <tr data-link="<%= reputation_path(reputation) %>">
+            <td><%= @user.email %></td>
+            <td><%= @server.title %></td>
+            <td><%= @server.owner == @user.email ? 'Owner' : 'Player' %></td>
+            <td>
+              <% reputation.rating.times do |i| %>
+                  <span class="glyphicon glyphicon-star" aria-hidden="true"></span>
+              <% end %>
+              <% (5 - reputation.rating).times do |i| %>
+                  <span class="glyphicon glyphicon-star-empty" aria-hidden="true"></span>
+              <% end %>
+            </td>
+          </tr>
+      <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<%= link_to 'Back to Servers', servers_path, {:class => 'btn btn-default'} %>

@@ -1,3 +1,63 @@
-<h3>User</h3>
-<p>Name: <%= @user.name if @user.name %></p>
-<p>Email: <%= @user.email if @user.email %></p>
+<br>
+<div class="panel panel-primary">
+  <div class="panel-heading"><h3 class="panel-title">User Information</h3></div>
+  <div class="panel-body">
+    <p><strong>Name:</strong> <%= @user.name if @user.name %></p>
+
+    <p><strong>Email:</strong> <%= @user.email if @user.email %></p>
+    <%
+       @rating = Reputation.includes(:server).references(:servers).where.not(servers: { owner: @user.email}).where(to_id: @user.id, ).average(:rating).to_f
+
+       # noinspection RubyArgCount
+       @rating = @rating.round.to_i
+    %>
+    <p><strong>Average Rating:</strong>
+      <% @rating.times do |i| %>
+          <span class="glyphicon glyphicon-star" aria-hidden="true"></span>
+      <% end %>
+      <% (5 - @rating).times do |i| %>
+          <span class="glyphicon glyphicon-star-empty" aria-hidden="true"></span>
+      <% end %>
+    </p>
+  </div>
+</div>
+<br>
+<div class="panel panel-info">
+  <div class="panel-heading"><h3 class="panel-title">Reputation</h3></div>
+  <div class="panel-body">
+    <div class="container-fluid">
+      <%
+         @reputations = Reputation.where(to_id: @user.id)
+         @reputations.each do |rep|
+           @rating = rep.rating
+           @from = User.find_by_id(rep.from_id)
+           @server = Server.find_by_id(rep.server_id)
+           if (@server.owner != @user.email) # ignore server ratings, display only player ratings
+      %>
+              <div class="row">
+                <div class="col-sm-2"><strong>From</strong></div>
+                <div class="col-sm-10">
+                  <%= @from.email %><br>
+                  <%= 'Owner of ' %>
+                  <%= link_to(@server.title, server_path(@server)).html_safe %>
+                </div>
+                <div class="col-sm-2"><strong>Rating</strong></div>
+                <div class="col-sm-10">
+                  <% @rating.times do |i| %>
+                      <span class="glyphicon glyphicon-star" aria-hidden="true"></span>
+                  <% end %>
+                  <% (5 - @rating).times do |i| %>
+                      <span class="glyphicon glyphicon-star-empty" aria-hidden="true"></span>
+                  <% end %>
+                </div>
+                <div class="col-sm-2"><strong>Message</strong></div>
+                <div class="col-sm-10">
+                  <pre><%= rep.message %></pre>
+                </div>
+              </div>
+              <hr>
+          <% end %>
+      <% end %>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,55 @@
+<%= form_for(@reputation) do |f| %>
+    <% if @reputation.errors.any? %>
+        <div id="error_explanation">
+          <h2><%= pluralize(@reputation.errors.count, "error") %> prohibited this reputation from being saved:</h2>
+
+          <ul>
+            <% @reputation.errors.full_messages.each do |message| %>
+                <li><%= message %></li>
+            <% end %>
+          </ul>
+        </div>
+    <% end %>
+    <%
+       if (@reputation.new_record?)
+         @invite = Invite.find_by_id(params[:invite])
+         @server = @invite.server_id
+         @from = current_user.id
+         @to = (@invite.to_id == @from ? @invite.from_id : @invite.to_id)
+       else
+         @server = @reputation.server_id
+         @from = @reputation.from_id
+         @to = @reputation.to_id
+       end
+    %>
+
+    <div class="field">
+      <%= f.label :to_id, "Leaving reputation for '" + User.find_by_id(@to).email + "'!" %><br>
+      <%= f.hidden_field :server_id, :value => @server, :readonly => true %>
+      <%= f.hidden_field :to_id, :value => @to, :readonly => true %>
+      <%= f.hidden_field :from_id, :value => @from, :readonly => true %>
+    </div>
+
+    <div class="field">
+      <%= f.label :rating %><br>
+      <%= f.radio_button :rating, 1 %>
+      <%= f.label :rating_1, "1 <span class=\"glyphicon glyphicon-star\" aria-hidden=\"true\"></span>".html_safe %>
+      <%= f.radio_button :rating, 2 %>
+      <%= f.label :rating_2, "2 <span class=\"glyphicon glyphicon-star\" aria-hidden=\"true\"></span>".html_safe %>
+      <%= f.radio_button :rating, 3 %>
+      <%= f.label :rating_3, "3 <span class=\"glyphicon glyphicon-star\" aria-hidden=\"true\"></span>".html_safe %>
+      <%= f.radio_button :rating, 4 %>
+      <%= f.label :rating_4, "4 <span class=\"glyphicon glyphicon-star\" aria-hidden=\"true\"></span>".html_safe %>
+      <%= f.radio_button :rating, 5 %>
+      <%= f.label :rating_5, "5 <span class=\"glyphicon glyphicon-star\" aria-hidden=\"true\"></span>".html_safe %>
+    </div>
+
+    <div class="field">
+      <%= f.label :message %><br>
+      <%= f.text_area :message, :cols => 60 %>
+    </div>
+
+    <div class="actions">
+      <%= f.submit %>
+    </div>
+<% end %>
